@@ -1,0 +1,5 @@
+build/
+.idea/
+.gradle/
+git-build-info.iml
+git-build-info-plugin

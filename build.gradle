@@ -1,0 +1,32 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'groovy'
+apply plugin: 'maven-publish'
+
+version='0.1'
+group='org.dvaske.gradle.git'
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+    compile 'org.slf4j:slf4j-api:1.7.5'
+    compile 'org.eclipse.jgit:org.eclipse.jgit:4.0.1.201506240215-r'
+}
+
+repositories {
+     mavenLocal()
+     mavenCentral()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
