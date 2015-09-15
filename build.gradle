@@ -3,10 +3,14 @@ buildscript {
         mavenLocal()
         mavenCentral()
     }
+    dependencies {
+        classpath 'org.dvaske.gradle.git:git-build-info:0.1'
+    }
 }
 
 apply plugin: 'groovy'
 apply plugin: 'maven-publish'
+apply plugin: 'git-build-info'
 
 version='0.1'
 group='org.dvaske.gradle.git'
@@ -29,4 +33,9 @@ publishing {
             from components.java
         }
     }
+}
+
+task gitInfo << {
+    println "$project.gitHead"
+    println "$project.gitDescribeInfo"
 }
