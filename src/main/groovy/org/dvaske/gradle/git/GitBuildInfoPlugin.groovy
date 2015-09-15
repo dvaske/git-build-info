@@ -38,40 +38,43 @@ import org.gradle.api.logging.Logging
 
 class GitBuildInfo implements Plugin<Project> {
 
-	def logger = Logging.getLogger(this.class)
-	private GitBuildInfoExtension config
+    def logger = Logging.getLogger(this.class)
+    private GitBuildInfoExtension config
 
-	def void apply(Project project) {
-		//this.project = project
-		this.config = project.extensions.create( GitBuildInfoExtension.NAME, GitBuildInfoExtension, project )
+    def void apply(Project project) {
+        //this.project = project
+        this.config = project.extensions.create(GitBuildInfoExtension.NAME, GitBuildInfoExtension, project)
 
-		//Default values
-		project.ext.gitHead = "0000000000000000000000000000000000000000"
-		project.ext.gitDescribeInfo = "N/A"
+        //Default values
+        project.ext.gitHead = "0000000000000000000000000000000000000000"
+        project.ext.gitDescribeInfo = "N/A"
 
-		try {
-			FileRepositoryBuilder frBuilder = new FileRepositoryBuilder();
-			def gitDir= new File (project.projectDir.path)
-			logger.debug("Looking for git dir in project ${project.name}: ${gitDir}")
-			Repository repo = frBuilder.findGitDir(gitDir) // scan from the project dir
-				.build();
+        try {
+            FileRepositoryBuilder frBuilder = new FileRepositoryBuilder();
+            def gitDir = new File(project.projectDir.path)
+            logger.debug("Looking for git dir in project ${project.name}: ${gitDir}")
+            Repository repo = frBuilder.findGitDir(gitDir) // scan from the project dir
+                    .build();
 
-			logger.info("Found git repository at ${repo.workTree}")
-			def head = repo.getRef("HEAD")
-			logger.info("HEAD: $head.objectId")
+            logger.info("Found git repository at ${repo.workTree}")
+            def head = repo.getRef("HEAD")
+            logger.info("HEAD: $head.objectId")
 
-			if (head.objectId != null) {
-				project.ext.gitHead = head.objectId.name
+            if (head.objectId != null) {
+                project.ext.gitHead = head.objectId.name
 
-				DescribeCommand describe = new Git(repo).describe()
-				describe.setLong(true)
-				project.ext.gitDescribeInfo = describe.call()
-				repo.close()
-				logger.info('Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo')
-			}
-		} catch (IllegalArgumentException ex) {
-			//ignore - no git repo
-		}
-	}
+                DescribeCommand describe = new Git(repo).describe()
+                describe.setLong(true)
+                project.ext.gitDescribeInfo = describe.call()
+                repo.close()
+                logger.info('Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo')
+            }
+            if (!project.gitDescribeInfo) {
+                project.ext.gitDescribeInfo = "N/A"
+            }
+        } catch (IllegalArgumentException ex) {
+            //ignore - no git repo
+        }
+    }
 }
 
