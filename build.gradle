@@ -4,7 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'org.dvaske.gradle.git:git-build-info:0.1'
+        classpath "org.dvaske.gradle:git-build-info:0.1"
     }
 }
 
@@ -14,10 +14,10 @@ task wrapper(type: Wrapper) {
 
 apply plugin: 'groovy'
 apply plugin: 'maven-publish'
-apply plugin: 'git-build-info'
+apply plugin: 'org.dvaske.gradle.git-build-info'
 
 version='0.1'
-group='org.dvaske.gradle.git'
+group='org.dvaske.gradle'
 
 dependencies {
     compile gradleApi()

@@ -26,7 +26,7 @@
  *
  */
 
-package org.dvaske.gradle.git
+package org.dvaske.gradle
 
 import org.eclipse.jgit.api.DescribeCommand
 import org.eclipse.jgit.api.Git

@@ -1,4 +1,4 @@
-package org.dvaske.gradle.git
+package org.dvaske.gradle
 
 import org.gradle.api.Project
 
