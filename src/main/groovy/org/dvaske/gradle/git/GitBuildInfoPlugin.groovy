@@ -39,6 +39,10 @@ import org.gradle.api.logging.Logging
 class GitBuildInfo implements Plugin<Project> {
 
     def logger = Logging.getLogger(this.class)
+
+    private final static String INITIALSHA= "0000000000000000000000000000000000000000"
+    private final static String NA = "N/A"
+
     private GitBuildInfoExtension config
 
     def void apply(Project project) {
@@ -46,17 +50,19 @@ class GitBuildInfo implements Plugin<Project> {
         this.config = project.extensions.create(GitBuildInfoExtension.NAME, GitBuildInfoExtension, project)
 
         //Default values
-        project.ext.gitHead = "0000000000000000000000000000000000000000"
-        project.ext.gitDescribeInfo = "N/A"
+        project.ext.gitHead = INITIALSHA
+        project.ext.gitDescribeInfo = NA
 
         try {
             FileRepositoryBuilder frBuilder = new FileRepositoryBuilder();
             def gitDir = new File(project.projectDir.path)
             logger.debug("Looking for git dir in project ${project.name}: ${gitDir}")
+
             Repository repo = frBuilder.findGitDir(gitDir) // scan from the project dir
                     .build();
 
             logger.info("Found git repository at ${repo.workTree}")
+
             def head = repo.getRef("HEAD")
             logger.info("HEAD: $head.objectId")
 
@@ -69,10 +75,12 @@ class GitBuildInfo implements Plugin<Project> {
                 repo.close()
                 logger.info('Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo')
             }
+            // If 'git describe' returns null, i.e. not tag found, set NA
             if (!project.gitDescribeInfo) {
-                project.ext.gitDescribeInfo = "N/A"
+                project.ext.gitDescribeInfo = NA
             }
         } catch (IllegalArgumentException ex) {
+            logger.info('Git repository not found for $project.name')
             //ignore - no git repo
         }
     }
