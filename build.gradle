@@ -6,9 +6,12 @@ buildscript {
         mavenLocal()
     }
     dependencies {
-        classpath "org.dvaske.gradle:git-build-info:0.+"
         classpath "com.gradle.publish:plugin-publish-plugin:0.9.1"
     }
+}
+
+plugins {
+    id "org.dvaske.gradle.git-build-info" version "0.1"
 }
 
 task wrapper(type: Wrapper) {
@@ -20,7 +23,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.dvaske.gradle.git-build-info'
 apply plugin: "com.gradle.plugin-publish"
 
-version='0.2-SNAPSHOT'
+version='0.2'
 group='org.dvaske.gradle'
 
 dependencies {
