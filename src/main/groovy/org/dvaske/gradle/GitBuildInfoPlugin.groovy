@@ -61,10 +61,10 @@ class GitBuildInfo implements Plugin<Project> {
             Repository repo = frBuilder.findGitDir(gitDir) // scan from the project dir
                     .build();
 
-            logger.info("Found git repository at ${repo.workTree}")
+            logger.debug("Found git repository at ${repo.workTree} for $project.name")
 
             def head = repo.getRef("HEAD")
-            logger.info("HEAD: $head.objectId")
+            logger.debug("HEAD: $head.objectId")
 
             if (head.objectId != null) {
                 project.ext.gitHead = head.objectId.name
@@ -73,14 +73,14 @@ class GitBuildInfo implements Plugin<Project> {
                 describe.setLong(true)
                 project.ext.gitDescribeInfo = describe.call()
                 repo.close()
-                logger.info('Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo')
+                logger.debug("Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo")
             }
             // If 'git describe' returns null, i.e. not tag found, set NA
             if (!project.gitDescribeInfo) {
                 project.ext.gitDescribeInfo = NA
             }
         } catch (IllegalArgumentException ex) {
-            logger.info('Git repository not found for $project.name')
+            logger.info("Git repository not found for $project.name")
             //ignore - no git repo
         }
     }
