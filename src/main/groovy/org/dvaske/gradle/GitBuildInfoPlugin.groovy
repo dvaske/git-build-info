@@ -30,8 +30,11 @@ package org.dvaske.gradle
 
 import org.eclipse.jgit.api.DescribeCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.internal.storage.file.FileRepository
+import org.eclipse.jgit.lib.AnyObjectId
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -104,5 +107,28 @@ class GitBuildInfo implements Plugin<Project> {
             logger.info("Git repository not found for $project.name")
             //ignore - no git repo
         }
+    }
+
+    private Map<ObjectId, List<String>> getAllRefs(FileRepository r) {
+        def Map<ObjectId, List<String>> refs = new HashMap<ObjectId, List<String>>();
+        def Map<AnyObjectId, Set<Ref>> allRefs = r.getAllRefsByPeeledObjectId();
+        for (AnyObjectId id : allRefs.keySet()) {
+            List<String> list = new ArrayList<String>();
+            for (Ref setRef : allRefs.get(id)) {
+                String name = setRef.getName();
+                // Don't add remote refs, and replace 'refs/heads/' in ref name
+                if ( ! ( name.startsWith("refs/remotes") || name.equals('HEAD') ) ) {
+                    list.add(name.replace('refs/heads/', ''));
+                }
+            }
+            refs.put(id.toObjectId(), list);
+        }
+        return refs;
+    }
+
+    private String getRefs(ObjectId commit, FileRepository repo){
+        Map<ObjectId, List<String>> refs = getAllRefs(repo)
+        //return StringUtils.join(refs.get(commit), ',')
+        return refs.get(commit)
     }
 }
