@@ -30,6 +30,7 @@ package org.dvaske.gradle
 
 import org.eclipse.jgit.api.DescribeCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.gradle.api.Plugin
@@ -52,28 +53,48 @@ class GitBuildInfo implements Plugin<Project> {
         //Default values
         project.ext.gitHead = INITIALSHA
         project.ext.gitDescribeInfo = NA
+        project.ext.gitCommit = INITIALSHA
+        project.ext.gitBranch = NA
+        project.ext.gitRemote = NA
 
         try {
             FileRepositoryBuilder frBuilder = new FileRepositoryBuilder();
             def gitDir = new File(project.projectDir.path)
-            logger.debug("Looking for git dir in project ${project.name}: ${gitDir}")
+            //logger.debug("Looking for git dir in project ${project.name}: ${gitDir}")
 
             Repository repo = frBuilder.findGitDir(gitDir) // scan from the project dir
                     .build();
 
-            logger.debug("Found git repository at ${repo.workTree} for $project.name")
+            //logger.debug("Found git repository at ${repo.workTree} for $project.name")
 
-            def head = repo.getRef("HEAD")
-            logger.debug("HEAD: $head.objectId")
+            def ObjectId head = repo.resolve('HEAD')
+            //logger.debug("HEAD: $head")
+            if (head) {
+                def gitCommit = head.toString(head)
+                project.ext.gitCommit = gitCommit
+                def gitBranch = repo.getBranch()
+                //logger.debug("gitBranch $gitBranch")
+                if (gitBranch == gitCommit){
+                    // Try to resolve the branch from all refs
+                    def branch = getRefs(head, repo)
+                    //logger.debug("branch: $branch")
+                    if (branch) {
+                        project.ext.gitBranch = branch.toString().replace('[', '').replace(']','')
+                    }
+                } else {
+                    project.ext.gitBranch = gitBranch
+                }
 
-            if (head.objectId != null) {
-                project.ext.gitHead = head.objectId.name
+                def gitRemote = repo.getConfig().getString("remote", "origin", "url")
+                //logger.debug("gitRemote: $gitRemote")
+                project.ext.gitRemote = gitRemote
+                project.ext.gitHead = head.name
 
                 DescribeCommand describe = new Git(repo).describe()
                 describe.setLong(true)
                 project.ext.gitDescribeInfo = describe.call()
                 repo.close()
-                logger.debug("Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo")
+                //logger.debug("Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo")
             }
             // If 'git describe' returns null, i.e. not tag found, set NA
             if (!project.gitDescribeInfo) {
@@ -85,4 +106,3 @@ class GitBuildInfo implements Plugin<Project> {
         }
     }
 }
-
