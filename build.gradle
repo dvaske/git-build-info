@@ -7,11 +7,12 @@ buildscript {
     }
     dependencies {
         classpath "com.gradle.publish:plugin-publish-plugin:0.9.1"
+        //classpath "org.dvaske.gradle:git-build-info:0.3"
     }
 }
 
 plugins {
-    id "org.dvaske.gradle.git-build-info" version "0.2"
+    id "org.dvaske.gradle.git-build-info" version "0.3"
 }
 
 task wrapper(type: Wrapper) {
@@ -59,6 +60,9 @@ pluginBundle {
 }
 
 task gitInfo << {
-    println "$project.gitHead"
-    println "$project.gitDescribeInfo"
+    println "HEAD:     $project.gitHead"
+    println "Describe: $project.gitDescribeInfo"
+    println "Commit:   $project.gitCommit"
+    println "Branch:   $project.gitBranch"
+    println "Remote:   $project.gitRemote"
 }
