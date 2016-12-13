@@ -116,18 +116,17 @@ class GitBuildInfo implements Plugin<Project> {
             List<String> list = new ArrayList<String>();
             for (Ref setRef : allRefs.get(id)) {
                 String name = setRef.getName();
-                // Don't add remote refs, and replace 'refs/heads/' in ref name
-                if ( ! ( name.startsWith("refs/remotes") || name.equals('HEAD') ) ) {
-                    list.add(name.replace('refs/heads/', ''));
-                }
+                // 'refs/heads/' and 'refs/remote/' in ref name
+                list.add(name.replace('refs/heads/', '').replace('refs/remotes/', ''));
             }
-            refs.put(id.toObjectId(), list);
+
+            refs.put(id.toObjectId(), list as Set);
         }
         return refs;
     }
 
     private String getRefs(ObjectId commit, FileRepository repo){
-        Map<ObjectId, List<String>> refs = getAllRefs(repo)
+        Map<ObjectId, Set<String>> refs = getAllRefs(repo)
         //return StringUtils.join(refs.get(commit), ',')
         return refs.get(commit)
     }
