@@ -77,6 +77,8 @@ class GitBuildInfo implements Plugin<Project> {
                 project.ext.gitCommit = gitCommit
                 def gitBranch = repo.getBranch()
                 //logger.debug("gitBranch $gitBranch")
+
+                // If we are on a detached head resolve branch:
                 if (gitBranch == gitCommit){
                     // Try to resolve the branch from all refs
                     def branch = getRefs(head, repo)
