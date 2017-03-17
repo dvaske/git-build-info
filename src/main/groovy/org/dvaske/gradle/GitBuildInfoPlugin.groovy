@@ -30,11 +30,12 @@ package org.dvaske.gradle
 
 import org.eclipse.jgit.api.DescribeCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.lib.AnyObjectId
 import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -95,9 +96,13 @@ class GitBuildInfo implements Plugin<Project> {
                 project.ext.gitRemote = gitRemote
                 project.ext.gitHead = head.name
 
-                DescribeCommand describe = new Git(repo).describe()
-                describe.setLong(true)
-                project.ext.gitDescribeInfo = describe.call()
+                try {
+                    DescribeCommand describe = new Git(repo).describe()
+                    describe.setLong(true)
+                    project.ext.gitDescribeInfo = describe.call()
+                } catch (JGitInternalException e) {
+                    logger.debug '`git describe` returned an error. Are you in a shallow cloned Git repository?', e
+                }
                 repo.close()
                 //logger.debug("Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo")
             }
