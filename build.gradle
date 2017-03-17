@@ -16,7 +16,7 @@ plugins {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.6'
+    gradleVersion = '3.4'
 }
 
 apply plugin: 'groovy'
@@ -59,10 +59,12 @@ pluginBundle {
     }
 }
 
-task gitInfo << {
-    println "HEAD:     $project.gitHead"
-    println "Describe: $project.gitDescribeInfo"
-    println "Commit:   $project.gitCommit"
-    println "Branch:   $project.gitBranch"
-    println "Remote:   $project.gitRemote"
+task gitInfo {
+    doLast {
+        println "HEAD:     $project.gitHead"
+        println "Describe: $project.gitDescribeInfo"
+        println "Commit:   $project.gitCommit"
+        println "Branch:   $project.gitBranch"
+        println "Remote:   $project.gitRemote"
+    }
 }
