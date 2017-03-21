@@ -16,7 +16,7 @@ plugins {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.6'
+    gradleVersion = '3.4.1'
 }
 
 apply plugin: 'groovy'
