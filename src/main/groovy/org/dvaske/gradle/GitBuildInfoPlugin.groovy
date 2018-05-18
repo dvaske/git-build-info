@@ -1,30 +1,30 @@
 /*
- * git-build-info
- * Created by Aske Olsson on 2015-09-15.
- * Copyright (c) 2015, Aske Olsson
- * All rights reserved.
- *
- * The MIT License (MIT)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
+* git-build-info
+* Created by Aske Olsson on 2015-09-15.
+* Copyright (c) 2015, Aske Olsson
+* All rights reserved.
+*
+* The MIT License (MIT)
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in all
+* copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+* SOFTWARE.
+*
+*/
 
 package org.dvaske.gradle
 
@@ -62,28 +62,34 @@ class GitBuildInfo implements Plugin<Project> {
         project.ext.gitRemote = NA
 
         try {
-            FileRepositoryBuilder frBuilder = new FileRepositoryBuilder();
             def gitDir = new File(project.projectDir.path)
-            //logger.debug("Looking for git dir in project ${project.name}: ${gitDir}")
 
+            FileRepositoryBuilder frBuilder = new FileRepositoryBuilder();
+            //def gitDir = new File(project.projectDir.path)
+            logger.debug("Looking for git dir in project ${project.name}: ${gitDir}")
             Repository repo = frBuilder.findGitDir(gitDir) // scan from the project dir
-                    .build();
+            .build();
+            logger.debug("Found git repository at ${repo.workTree} for $project.name")
 
-            //logger.debug("Found git repository at ${repo.workTree} for $project.name")
+            File gitFile = new File(project.rootProject.buildDir.path + "/gitbuildinfo/" + repo.workTree.name)
+            if (gitFile.exists()){
+                loadValuesFromFile(gitFile, project)
+            } else {
+                // Find git values
 
-            def ObjectId head = repo.resolve('HEAD')
-            //logger.debug("HEAD: $head")
-            if (head) {
+                def ObjectId head = repo.resolve('HEAD')
+                logger.debug("HEAD: $head")
+                if (head) {
                 def gitCommit = head.toString(head)
                 project.ext.gitCommit = gitCommit
                 def gitBranch = repo.getBranch()
-                //logger.debug("gitBranch $gitBranch")
+                logger.debug("gitBranch $gitBranch")
 
                 // If we are on a detached head resolve branch:
                 if (gitBranch == gitCommit){
                     // Try to resolve the branch from all refs
                     def branch = getRefs(head, repo)
-                    //logger.debug("branch: $branch")
+                    logger.debug("branch: $branch")
                     if (branch) {
                         project.ext.gitBranch = branch.toString().replace('[', '').replace(']','')
                     }
@@ -92,7 +98,7 @@ class GitBuildInfo implements Plugin<Project> {
                 }
 
                 def gitRemote = repo.getConfig().getString("remote", "origin", "url")
-                //logger.debug("gitRemote: $gitRemote")
+                logger.debug("gitRemote: $gitRemote")
                 project.ext.gitRemote = gitRemote
                 project.ext.gitHead = head.name
 
@@ -100,20 +106,56 @@ class GitBuildInfo implements Plugin<Project> {
                     DescribeCommand describe = new Git(repo).describe()
                     describe.setLong(true)
                     project.ext.gitDescribeInfo = describe.call()
+
                 } catch (JGitInternalException e) {
-                    logger.debug '`git describe` returned an error. Are you in a shallow cloned Git repository?', e
+                    logger.warning '`git describe` returned an error. Are you in a shallow cloned Git repository?', e
                 }
                 repo.close()
+
                 //logger.debug("Git repository info: HEAD: $project.gitHead, describe: project.gitDescribeInfo")
+                }
+                // If 'git describe' returns null, i.e. not tag found, set NA
+                if (!project.gitDescribeInfo) {
+                    project.ext.gitDescribeInfo = NA
+                }
+            writeValuesToFile(gitFile, project)
             }
-            // If 'git describe' returns null, i.e. not tag found, set NA
-            if (!project.gitDescribeInfo) {
-                project.ext.gitDescribeInfo = NA
-            }
+
         } catch (IllegalArgumentException ex) {
-            logger.info("Git repository not found for $project.name")
+            logger.warning("Git repository not found for $project.name")
             //ignore - no git repo
         }
+    }
+
+    private void writeValuesToFile(File gitFile, Project project){
+        // Make sure buildDir in rootproject exists
+        if (! project.rootProject.buildDir.exists()){
+            project.rootProject.buildDir.mkdir()
+        }
+        if (! new File(gitFile.parent).exists()){
+            new File(gitFile.parent).mkdir()
+        }
+        logger.debug("Writing gitInfo for ${project.name} in ${gitFile.path}")
+        gitFile.withWriter('UTF-8') { writer ->
+            writer.write("gitHead=${project.gitHead}\n")
+            writer.write("gitDescribeInfo=${project.gitDescribeInfo}\n")
+            writer.write("gitCommit=${project.gitCommit}\n")
+            writer.write("gitBranch=${project.gitBranch}\n")
+            writer.write("gitRemote=${project.gitRemote}\n")
+        }
+    }
+
+    private void loadValuesFromFile(File gitFile, Project project){
+        logger.debug("Loading gitInfo for ${project.name} from ${gitFile.path}")
+        Properties properties = new Properties()
+        gitFile.withInputStream {
+            properties.load(it)
+        }
+        project.ext.gitHead = properties.gitHead
+        project.ext.gitDescribeInfo = properties.gitDescribeInfo
+        project.ext.gitCommit = properties.gitCommit
+        project.ext.gitBranch = properties.gitBranch
+        project.ext.gitRemote = properties.gitRemote
     }
 
     private Map<ObjectId, List<String>> getAllRefs(FileRepository r) {
@@ -126,7 +168,6 @@ class GitBuildInfo implements Plugin<Project> {
                 // 'refs/heads/' and 'refs/remote/' in ref name
                 list.add(name.replace('refs/heads/', '').replace('refs/remotes/', ''));
             }
-
             refs.put(id.toObjectId(), list as Set);
         }
         return refs;

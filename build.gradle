@@ -12,7 +12,7 @@ buildscript {
 }
 
 plugins {
-    id "org.dvaske.gradle.git-build-info" version "0.5"
+    id "org.dvaske.gradle.git-build-info" version "0.6"
 }
 
 task wrapper(type: Wrapper) {
@@ -24,7 +24,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.dvaske.gradle.git-build-info'
 apply plugin: "com.gradle.plugin-publish"
 
-version='0.6'
+version='0.7'
 group='org.dvaske.gradle'
 
 dependencies {
