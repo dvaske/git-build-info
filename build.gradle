@@ -24,7 +24,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.dvaske.gradle.git-build-info'
 apply plugin: "com.gradle.plugin-publish"
 
-version='0.8'
+version='0.9'
 group='org.dvaske.gradle'
 
 dependencies {

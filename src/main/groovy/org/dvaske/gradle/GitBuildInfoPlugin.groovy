@@ -31,6 +31,7 @@ package org.dvaske.gradle
 import org.eclipse.jgit.api.DescribeCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.JGitInternalException
+import org.eclipse.jgit.errors.NoWorkTreeException
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.lib.AnyObjectId
 import org.eclipse.jgit.lib.ObjectId
@@ -39,11 +40,12 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
 class GitBuildInfo implements Plugin<Project> {
 
-    def logger = Logging.getLogger(this.class)
+    Logger logger = Logging.getLogger(this.class)
 
     private final static String INITIALSHA= "0000000000000000000000000000000000000000"
     private final static String NA = "N/A"
@@ -108,7 +110,7 @@ class GitBuildInfo implements Plugin<Project> {
                     project.ext.gitDescribeInfo = describe.call()
 
                 } catch (JGitInternalException e) {
-                    logger.warning '`git describe` returned an error. Are you in a shallow cloned Git repository?', e
+                    logger.warn('`git describe` returned an error. Are you in a shallow cloned Git repository?', e)
                 }
                 repo.close()
 
@@ -122,8 +124,13 @@ class GitBuildInfo implements Plugin<Project> {
             }
 
         } catch (IllegalArgumentException ex) {
-            logger.warning("Git repository not found for $project.name")
+            logger.warn("Git repository not found for $project.name")
             //ignore - no git repo
+        } catch (NoWorkTreeException ex) {
+            logger.warn('Could not find a git repository with worktree for ' + project.name)
+            logger.warn('`git worktree is not supported by jgit (yet): ')
+            logger.warn('https://bugs.eclipse.org/bugs/show_bug.cgi?id=477475')
+            logger.warn('Exception: ' + ex.toString())
         }
     }
 
